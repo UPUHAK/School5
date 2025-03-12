@@ -1,6 +1,9 @@
 package ru.hogwarts.school5.service.impl;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import ru.hogwarts.school5.model.Avatar;
@@ -12,6 +15,7 @@ import ru.hogwarts.school5.service.AvatarService;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
 
@@ -44,8 +48,15 @@ public class AvatarServiceImpl implements AvatarService {
         return avatarRepository.findById(avatarId).orElseThrow();
     }
 
+    @Override
+    public List<Avatar> getPaginatedAvatars(int pageNumber, int pageSize) {
+        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize);
+        Page<Avatar> avatarPage = avatarRepository.findAll(pageable);
+        return avatarPage.getContent();
+    }
+
     private Path saveToDisk(Long studentId, MultipartFile avatarFile) throws IOException {
-        Path filePath = Path.of(avatarsDir,  "avatar"+ studentId + "." + getExtensions(avatarFile.getOriginalFilename()));
+        Path filePath = Path.of(avatarsDir, "avatar" + studentId + "." + getExtensions(avatarFile.getOriginalFilename()));
 
         Files.createDirectories(filePath.getParent());
         Files.deleteIfExists(filePath);
