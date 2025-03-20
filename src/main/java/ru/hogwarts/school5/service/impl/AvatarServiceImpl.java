@@ -1,5 +1,8 @@
 package ru.hogwarts.school5.service.impl;
 
+import jakarta.persistence.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,6 +25,8 @@ import static java.nio.file.StandardOpenOption.CREATE_NEW;
 @Service
 public class AvatarServiceImpl implements AvatarService {
 
+    private static final Logger logger = LoggerFactory.getLogger(AvatarServiceImpl.class);
+
     private final AvatarRepository avatarRepository;
 
     private final StudentRepository studentRepository;
@@ -36,27 +41,41 @@ public class AvatarServiceImpl implements AvatarService {
 
     @Override
     public void uploadAvatar(Long studentId, MultipartFile avatarFile) throws IOException {
-        Student student = studentRepository.findById(studentId).orElseThrow();
+        logger.info("Was invoked method for upload avatar");
 
-        Path avatarPath = saveToDisk(studentId, avatarFile);
-        saveToDatabase(student, avatarPath, avatarFile);
+        try {
+            Student student = studentRepository.findById(studentId)
+                    .orElseThrow(() -> {
+                        logger.error("There is not student with id = {}", studentId);
+                        return new EntityNotFoundException("Student not found");
+                    });
 
+            Path avatarPath = saveToDisk(studentId, avatarFile);
+            saveToDatabase(student, avatarPath, avatarFile);
+        } catch (IOException e) {
+            logger.error("Error during avatar upload for studentId={}", studentId, e);
+            throw e;
+        }
     }
 
     @Override
     public Avatar findAvatarById(Long avatarId) {
+        logger.info("Was invoked method for find avatar by id");
         return avatarRepository.findById(avatarId).orElseThrow();
     }
 
     @Override
     public List<Avatar> getPaginatedAvatars(int pageNumber, int pageSize) {
+        logger.info("Was invoked method for get paginated avatars");
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize);
         Page<Avatar> avatarPage = avatarRepository.findAll(pageable);
         return avatarPage.getContent();
     }
 
     private Path saveToDisk(Long studentId, MultipartFile avatarFile) throws IOException {
-        Path filePath = Path.of(avatarsDir, "avatar" + studentId + "." + getExtensions(avatarFile.getOriginalFilename()));
+        logger.info("Was invoked method for save avatar to disk");
+        Path filePath = Path.of(avatarsDir, "avatar" + studentId + "." +
+                getExtensions(avatarFile.getOriginalFilename()));
 
         Files.createDirectories(filePath.getParent());
         Files.deleteIfExists(filePath);
@@ -75,6 +94,7 @@ public class AvatarServiceImpl implements AvatarService {
     }
 
     private void saveToDatabase(Student student, Path avatarPath, MultipartFile avatarFile) throws IOException {
+        logger.info("Was invoked method for save avatar to database");
         Avatar avatar = findAvatar(student.getId());
 
         avatar.setStudent(student);
@@ -87,12 +107,14 @@ public class AvatarServiceImpl implements AvatarService {
     }
 
     private Avatar findAvatar(Long studentId) {
+        logger.info("Was invoked method for find avatar");
         return avatarRepository.findByStudent_id(studentId).orElse(
                 new Avatar()
         );
     }
 
     private String getExtensions(String fileName) {
+        logger.info("Was invoked method for get extensions");
         return fileName.substring(fileName.lastIndexOf(".") + 1);
     }
 }
