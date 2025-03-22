@@ -7,6 +7,7 @@ import ru.hogwarts.school5.model.Faculty;
 import ru.hogwarts.school5.repository.FacultyRepository;
 import ru.hogwarts.school5.service.FacultyService;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -61,5 +62,14 @@ public class FacultyServiceImpl implements FacultyService {
     public List<Faculty> findByNameIgnoreCaseOrColorIgnoreCase(String name, String color) {
         logger.info("Was invoked method for find faculty by name ignore case or color ignore case");
         return facultyRepository.findByNameIgnoreCaseOrColorIgnoreCase(name, color);
+    }
+
+    @Override
+    public String getLongestFacultyName() {
+        return facultyRepository.findAll()
+                .stream()
+                .map(Faculty::getName)
+                .max(Comparator.comparing(String::length))
+                .orElse("");
     }
 }
