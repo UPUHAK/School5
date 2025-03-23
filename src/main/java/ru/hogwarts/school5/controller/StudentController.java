@@ -55,23 +55,6 @@ public class StudentController {
         return studentService.findByAgeBetween(from, to);
     }
 
-    @PostMapping(value = "/{studentId}/avatar", consumes = MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> uploadAvatar(
-            @PathVariable Long studentId,
-            @RequestParam MultipartFile avatar
-    ) throws IOException {
-        avatarService.uploadAvatar(studentId, avatar);
-        return ResponseEntity.ok().build();
-    }
 
-    @GetMapping("getAllStudentsNameStartsWithA")
-    public List<String> getAllStudentsNameStartsWithA() {
-        return studentService.getAllStudentsNameStartsWithA();
-    }
-
-    @GetMapping("getAverageAgeStudentWithStream")
-    public Double getAverageAgeStudentWithStream() {
-        return studentService.getAverageAgeStudentWithStream();
-    }
 
 }
